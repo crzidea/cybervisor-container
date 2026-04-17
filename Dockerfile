@@ -1,5 +1,7 @@
 FROM python:3.11 AS cybervisor-base
 
+ARG CYBERVISOR_VERSION=latest
+
 RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
     && apt-get install -y nodejs \
     && rm -rf /var/lib/apt/lists/*
@@ -14,6 +16,12 @@ RUN curl -fsSL https://claude.ai/install.sh | bash \
     && chmod +x /usr/local/bin/claude
 
 ENV PATH="/usr/local/bin:$PATH"
+
+RUN if [ "$CYBERVISOR_VERSION" = "latest" ]; then \
+        pip install --no-cache-dir cybervisor; \
+    else \
+        pip install --no-cache-dir cybervisor=="$CYBERVISOR_VERSION"; \
+    fi
 
 RUN mkdir /workspace && chmod 777 /workspace
 WORKDIR /workspace
