@@ -71,3 +71,5 @@ jobs:
           cache-to: type=gha,mode=max
           build-args: |
             CYBERVISOR_VERSION=${{ steps.version.outputs.version }}
+          secrets: |
+            cybervisor_pat=${{ secrets.CYBERVISOR_PAT }}

@@ -1,4 +1,4 @@
-FROM python:3.11 AS cybervisor-base
+FROM python:3.11
 
 ARG CYBERVISOR_VERSION=latest
 
@@ -8,22 +8,21 @@ RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
 
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
-RUN curl -fsSL https://claude.ai/install.sh | bash \
-    && cp -r /root/.local/share/claude /usr/local/share/claude \
-    && chmod -R 755 /usr/local/share/claude \
-    && CLAUDE_VERSION=$(readlink /root/.local/bin/claude | xargs basename) \
-    && printf "#!/bin/bash\n/usr/local/share/claude/versions/$CLAUDE_VERSION \"\$@\"" > /usr/local/bin/claude \
-    && chmod +x /usr/local/bin/claude
+ENV NPM_CONFIG_PREFIX=/usr/local
+RUN npm install -g @anthropic-ai/claude-code
 
 ENV PATH="/usr/local/bin:$PATH"
 
-RUN if [ "$CYBERVISOR_VERSION" = "latest" ]; then \
-        pip install --no-cache-dir cybervisor; \
+RUN --mount=type=secret,id=cybervisor_pat \
+    if [ "$CYBERVISOR_VERSION" = "latest" ]; then \
+        pip install --no-cache-dir "cybervisor @ git+https://$(cat /run/secrets/cybervisor_pat)@github.com/cybervisor/cybervisor.git"; \
     else \
-        pip install --no-cache-dir cybervisor=="$CYBERVISOR_VERSION"; \
+        pip install --no-cache-dir "cybervisor @ git+https://$(cat /run/secrets/cybervisor_pat)@github.com/cybervisor/cybervisor.git@v${CYBERVISOR_VERSION}"; \
     fi
 
 RUN mkdir /workspace && chmod 777 /workspace
 WORKDIR /workspace
+
+EXPOSE 8765
 
 CMD ["bash"]
