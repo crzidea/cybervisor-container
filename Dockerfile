@@ -15,9 +15,9 @@ ENV PATH="/usr/local/bin:$PATH"
 
 RUN --mount=type=secret,id=cybervisor_pat \
     if [ "$CYBERVISOR_VERSION" = "latest" ]; then \
-        pip install --no-cache-dir "cybervisor @ git+https://$(cat /run/secrets/cybervisor_pat)@github.com/cybervisor/cybervisor.git"; \
+        pip install --no-cache-dir "cybervisor @ git+https://$(cat /run/secrets/cybervisor_pat)@github.com/crzidea/cybervisor.git"; \
     else \
-        pip install --no-cache-dir "cybervisor @ git+https://$(cat /run/secrets/cybervisor_pat)@github.com/cybervisor/cybervisor.git@v${CYBERVISOR_VERSION}"; \
+        pip install --no-cache-dir "cybervisor @ git+https://$(cat /run/secrets/cybervisor_pat)@github.com/crzidea/cybervisor.git@v${CYBERVISOR_VERSION}"; \
     fi
 
 RUN mkdir /workspace && chmod 777 /workspace
