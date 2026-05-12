@@ -10,6 +10,7 @@ on:
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository_owner }}/cybervisor
+  SOURCE_REPOSITORY: ${{ github.repository_owner }}/cybervisor
 
 permissions:
   contents: read
@@ -20,8 +21,13 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
+      - name: Checkout cybervisor source
         uses: actions/checkout@v5
+        with:
+          repository: ${{ env.SOURCE_REPOSITORY }}
+          ref: ${{ github.event_name == 'pull_request' && github.base_ref || github.ref_name }}
+          path: cybervisor
+          token: ${{ secrets.CYBERVISOR_PAT || github.token }}
 
       - name: Docker meta
         id: meta
@@ -49,19 +55,12 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
 
-      - name: Extract cybervisor version from tag
-        id: version
-        run: |
-          if [[ "${GITHUB_REF}" == refs/tags/v* ]]; then
-            echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
-          else
-            echo "version=latest" >> "$GITHUB_OUTPUT"
-          fi
-
       - name: Build and push
         uses: docker/build-push-action@v7
         with:
-          context: .
+          context: cybervisor
+          file: cybervisor/Dockerfile
+          target: cybervisor
           push: ${{ github.event_name != 'pull_request' }}
           platforms: linux/amd64,linux/arm64
           tags: ${{ steps.meta.outputs.tags }}
@@ -69,7 +68,3 @@ jobs:
           provenance: false
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          build-args: |
-            CYBERVISOR_VERSION=${{ steps.version.outputs.version }}
-          secrets: |
-            cybervisor_pat=${{ secrets.CYBERVISOR_PAT }}
